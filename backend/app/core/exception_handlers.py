@@ -1,0 +1,90 @@
+import logging
+logger = logging.getLogger(__name__)
+
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from app.core.exceptions import AppException
+
+
+def create_error_response(
+    *,
+    status_code: int,
+    error_code: str,
+    message: str,
+    details: Any = None,
+) -> JSONResponse:
+    content: dict[str, Any] = {
+        "error": {
+            "code": error_code,
+            "message": message,
+        }
+    }
+
+    if details is not None:
+        content["error"]["details"] = details
+
+    return JSONResponse(
+        status_code=status_code,
+        content=content,
+    )
+
+
+async def app_exception_handler(
+    request: Request,
+    exception: AppException,
+) -> JSONResponse:
+    return create_error_response(
+        status_code=exception.status_code,
+        error_code=exception.error_code,
+        message=exception.message,
+    )
+
+
+async def validation_exception_handler(
+    request: Request,
+    exception: RequestValidationError,
+) -> JSONResponse:
+    return create_error_response(
+        status_code=422,
+        error_code="validation_error",
+        message="The request contains invalid data.",
+        details=exception.errors(),
+    )
+
+
+async def unexpected_exception_handler(
+    request: Request,
+    exception: Exception,
+) -> JSONResponse:
+    logger.exception(
+        "Unexpected error while processing %s %s",
+        request.method,
+        request.url.path,
+        exc_info=exception,
+    )
+
+    return create_error_response(
+        status_code=500,
+        error_code="internal_server_error",
+        message="An unexpected error occurred.",
+    )
+
+def register_exception_handlers(application: FastAPI) -> None:
+    application.add_exception_handler(
+        AppException,
+        app_exception_handler,
+    )
+
+    application.add_exception_handler(
+        RequestValidationError,
+        validation_exception_handler,
+    )
+
+    application.add_exception_handler(
+        Exception,
+        unexpected_exception_handler,
+    )
