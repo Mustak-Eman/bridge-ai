@@ -36,3 +36,16 @@ Thumbs.db
 # Logs
 # -----------------------------
 *.log
+
+# Local environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
