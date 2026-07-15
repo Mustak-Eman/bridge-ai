@@ -7,7 +7,12 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import AppException
+from app.core.exceptions import (
+    AppException,
+    InvalidOperationError,
+    ResourceConflictError,
+    ResourceNotFoundError,
+)
 
 
 def create_error_response(
@@ -37,8 +42,19 @@ async def app_exception_handler(
     request: Request,
     exception: AppException,
 ) -> JSONResponse:
+    del request
+
+    status_code = 400
+
+    if isinstance(exception, ResourceNotFoundError):
+        status_code = 404
+    elif isinstance(exception, ResourceConflictError):
+        status_code = 409
+    elif isinstance(exception, InvalidOperationError):
+        status_code = 422
+
     return create_error_response(
-        status_code=exception.status_code,
+        status_code=status_code,
         error_code=exception.error_code,
         message=exception.message,
     )

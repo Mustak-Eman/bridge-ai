@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import Workspace
@@ -16,9 +16,25 @@ class WorkspaceRepository(SQLAlchemyRepository[Workspace]):
 
         return self._session.scalar(statement)
 
-    def list_all(self) -> list[Workspace]:
-        statement = select(Workspace).order_by(
-            Workspace.name
+    def list_paginated(
+        self,
+        *,
+        offset: int,
+        limit: int,
+    ) -> list[Workspace]:
+        statement = (
+            select(Workspace)
+            .order_by(
+                Workspace.name,
+                Workspace.id,
+            )
+            .offset(offset)
+            .limit(limit)
         )
 
         return list(self._session.scalars(statement))
+
+    def count(self) -> int:
+        statement = select(func.count()).select_from(Workspace)
+
+        return self._session.scalar(statement) or 0

@@ -145,3 +145,83 @@ def test_project_repository_lists_projects_for_workspace(
         "Benefits Navigation",
         "Document Intake",
     ]
+    
+def test_workspace_repository_lists_paginated_results(
+    session: Session,
+) -> None:
+    repository = WorkspaceRepository(session)
+
+    for name, slug in [
+        ("Alpha Workspace", "alpha-workspace"),
+        ("Beta Workspace", "beta-workspace"),
+        ("Gamma Workspace", "gamma-workspace"),
+    ]:
+        repository.add(
+            Workspace(
+                name=name,
+                slug=slug,
+            )
+        )
+
+    workspaces = repository.list_paginated(
+        offset=1,
+        limit=1,
+    )
+
+    assert len(workspaces) == 1
+    assert workspaces[0].name == "Beta Workspace"
+
+
+def test_workspace_repository_counts_workspaces(
+    session: Session,
+) -> None:
+    repository = WorkspaceRepository(session)
+
+    repository.add(
+        Workspace(
+            name="First Workspace",
+            slug="first-workspace",
+        )
+    )
+    repository.add(
+        Workspace(
+            name="Second Workspace",
+            slug="second-workspace",
+        )
+    )
+
+    assert repository.count() == 2
+
+
+def test_project_repository_counts_projects_for_workspace(
+    session: Session,
+) -> None:
+    workspace_repository = WorkspaceRepository(session)
+    project_repository = ProjectRepository(session)
+
+    workspace = workspace_repository.add(
+        Workspace(
+            name="Workspace",
+            slug="workspace",
+        )
+    )
+
+    project_repository.add(
+        Project(
+            workspace_id=workspace.id,
+            name="First Project",
+            description=None,
+        )
+    )
+    project_repository.add(
+        Project(
+            workspace_id=workspace.id,
+            name="Second Project",
+            description=None,
+        )
+    )
+
+    assert (
+        project_repository.count_for_workspace(workspace.id)
+        == 2
+    )

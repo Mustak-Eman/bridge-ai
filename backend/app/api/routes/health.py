@@ -3,6 +3,9 @@ from fastapi import APIRouter
 from app.core.config import get_settings
 from app.core.exceptions import AppException
 
+class TestApplicationError(AppException):
+    error_code = "test_error"
+
 router = APIRouter()
 
 
@@ -19,8 +22,6 @@ def health_check() -> dict[str, str]:
 
 @router.get("/test-error", include_in_schema=False)
 def test_error() -> None:
-    raise AppException(
-        message="This is a test application error.",
-        status_code=400,
-        error_code="test_error",
+    raise TestApplicationError(
+        "This is a test application error."
     )
