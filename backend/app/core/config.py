@@ -1,12 +1,11 @@
-from app.ai.types import AIProvider
-from enum import StrEnum
-from typing import Literal
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.ai.types import AIProvider
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -26,7 +25,6 @@ class Settings(BaseSettings):
     ] = "development"
 
     debug: bool = True
-
     api_v1_prefix: str = "/api/v1"
 
     allowed_origins: list[str] = [
@@ -37,12 +35,12 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./bridge_ai.db"
     database_echo: bool = False
 
-    # ---------- AI ----------
+    # AI
     ai_provider: AIProvider = AIProvider.FAKE
     ai_model: str = "fake-document-analyzer-v1"
     anthropic_api_key: str | None = None
 
-    # ---------- Documents ----------
+    # Documents
     document_max_upload_bytes: int = 5_000_000
     ai_max_document_characters: int = 50_000
 
@@ -52,6 +50,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, value: str) -> str:
